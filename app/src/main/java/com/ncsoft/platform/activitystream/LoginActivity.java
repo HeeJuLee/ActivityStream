@@ -54,14 +54,15 @@ public class LoginActivity extends Activity {
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
-        mJiraUrl = mJiraUrlView.getText().toString();
-        mUserName = mUserNameView.getText().toString();
-        mPassword = mPasswordView.getText().toString();
-
         Button mLogInButton = (Button) findViewById(R.id.login_button);
         mLogInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                mJiraUrl = mJiraUrlView.getText().toString();
+                mUserName = mUserNameView.getText().toString();
+                mPassword = mPasswordView.getText().toString();
+
                 startLogin();
             }
         });
@@ -108,22 +109,25 @@ public class LoginActivity extends Activity {
 
         String authUrl = mJiraUrl + "/rest/auth/1/session";
 
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, authUrl, null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                Intent i = new Intent(LoginActivity.this, StreamActivity.class);
-                i.putExtra("SESSION_RESULT", response.toString());
-                startActivity(i);
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, authUrl, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Intent i = new Intent(LoginActivity.this, StreamActivity.class);
+                        i.putExtra("SESSION_RESULT", response.toString());
+                        startActivity(i);
 
-                //showToast("SUCCESS: " + response.toString());
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                showProgress(false);
-                showToast(error.getMessage());
-            }
-        }) {
+                        //showToast("SUCCESS: " + response.toString());
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        showProgress(false);
+                        showToast(error.getMessage());
+                    }
+                })
+        {
             @Override
             public byte[] getBody() {
 

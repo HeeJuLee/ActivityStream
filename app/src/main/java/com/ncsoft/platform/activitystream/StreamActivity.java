@@ -22,6 +22,13 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONObject;
+import org.xml.sax.InputSource;
+
+import java.io.ByteArrayInputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.List;
+import com.ncsoft.platform.activitystream.StreamParser.Entry;
 
 public class StreamActivity extends AppCompatActivity {
 
@@ -29,6 +36,7 @@ public class StreamActivity extends AppCompatActivity {
     private final String TAG_REQUEST = "TAG_ACTIVITY_STREAM";
 
     private TextView mResultTextView;
+    private JSONObject mSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +46,7 @@ public class StreamActivity extends AppCompatActivity {
         mResultTextView = (TextView) findViewById(R.id.result_text_view);
 
         try {
-            JSONObject jsonObject = new JSONObject(getIntent().getStringExtra("SESSION_RESULT"));
+            mSession = new JSONObject(getIntent().getStringExtra("SESSION_RESULT"));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -74,7 +82,8 @@ public class StreamActivity extends AppCompatActivity {
 
     private void getActivityStream() {
 
-        String url = "http://172.20.49.215:8080/activity";
+        //String url = "http://172.20.49.215:8080/activity";
+        String url = "http://192.168.0.6:8080/activity";
 
         Uri.Builder builder = Uri.parse(url).buildUpon();
         /*
@@ -88,7 +97,7 @@ public class StreamActivity extends AppCompatActivity {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        mResultTextView.setText(response);
+                        parsingActivityStream(response);
                     }
                 },
                 new Response.ErrorListener() {
@@ -110,14 +119,51 @@ public class StreamActivity extends AppCompatActivity {
 
                         mResultTextView.setText(error.getMessage());
                     }
+                })
+        {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<String, String>();
+
+                try {
+                    String value = mSession.getJSONObject("session").getString("value");
+                    headers.put("cookie", "JSESSIONID=" + value);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-        );
+
+                return headers;
+            }
+        };
 
         stringRequest.setShouldCache(true);
         stringRequest.setTag(TAG_REQUEST);
         mVolleyQueue.add(stringRequest);
     }
 
+    private void parsingActivityStream(String response) {
+
+        StreamParser streamParser = new StreamParser();
+        List<Entry> entries = null;
+
+        try {
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(response.getBytes());
+            entries = streamParser.parse(inputStream);
+
+            StringBuilder result = new StringBuilder();
+
+            for (Entry entry : entries) {
+                result.append("Title: ")
+                        .append(entry.title)
+                        .append(", Content: ")
+                        .append(entry.summary);
+            }
+            mResultTextView.setText(result.toString());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
