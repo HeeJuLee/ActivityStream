@@ -38,7 +38,8 @@ public class StreamActivity extends AppCompatActivity {
     private final String HOME_TEST_ACTIVITY_URL = "http://192.168.0.6:8080/activity";
     private final String NC_TEST_ACTIVITY_URL = "http://172.20.49.215:8080/activity";
     private final String NC_JIRA_ACTIVITY_URL = "http://jira.korea.ncsoft.corp/activity";
-    private final String FILTER_PARAM = "?maxResults=10&streams=key+IS+OSDT&providers=issues&os_authType=basic&title=Activity+Stream";
+    //private final String FILTER_PARAM = "?maxResults=10&streams=key+IS+OSDT&providers=issues&os_authType=basic&title=Activity+Stream";
+    private final String FILTER_PARAM = "?maxResults=50&providers=issues&os_authType=basic&title=Activity+Stream";
 
     private ListView mListView;
     private EntryAdapter mEntryAdapter;
@@ -215,16 +216,21 @@ public class StreamActivity extends AppCompatActivity {
             String imageUrl = mEntries.get(position).getAuthorImageLink();
             getAvataImage(imageUrl, holder.image);
             holder.authorName.setText(mEntries.get(position).getAuthorName());
-            holder.authorId.setText(mEntries.get(position).getAuthorId());
+            //holder.authorId.setText(mEntries.get(position).getAuthorId());
+
+            String issueKey, issueSummary;
 
             if(mEntries.get(position).getTargetIssueKey() != null)
-                holder.issueKey.setText(mEntries.get(position).getTargetIssueKey());
+                issueKey = mEntries.get(position).getTargetIssueKey();
             else
-                holder.issueKey.setText(mEntries.get(position).getObjectIssueKey());
+                issueKey = mEntries.get(position).getObjectIssueKey();
             if(mEntries.get(position).getTargetIssueSummary() != null)
-                holder.issueSummary.setText(mEntries.get(position).getTargetIssueSummary());
+                issueSummary = mEntries.get(position).getTargetIssueSummary();
             else
-                holder.issueSummary.setText(mEntries.get(position).getObjectIssueSummary());
+                issueSummary = mEntries.get(position).getObjectIssueSummary();
+
+            holder.issueKey.setText(issueKey + "  " + issueSummary);
+
             if(mEntries.get(position).getTargetIssueWebLink() != null)
                 holder.issueWebLink = mEntries.get(position).getTargetIssueWebLink();
             else

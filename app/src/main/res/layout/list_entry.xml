@@ -14,11 +14,13 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/margin_large"
         android:layout_toRightOf="@id/entry_image"
+        android:typeface="monospace"
         android:textSize="@dimen/text_normal" />
     <TextView
         android:id="@+id/entry_author_id"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/margin_large"
         android:layout_toRightOf="@id/entry_author_name"
         android:textSize="@dimen/text_small" />
     <TextView
@@ -26,6 +28,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/entry_author_name"
+        android:layout_marginLeft="@dimen/margin_large"
         android:layout_toRightOf="@id/entry_image"
         android:textSize="@dimen/text_normal" />
     <TextView
@@ -33,12 +36,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/entry_author_name"
+        android:layout_marginLeft="@dimen/margin_large"
         android:layout_toRightOf="@id/entry_issue_key"
         android:textSize="@dimen/text_normal" />
     <WebView
         android:id="@+id/entry_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/margin_large"
         android:layout_below="@id/entry_issue_key" />
 
 </RelativeLayout>
