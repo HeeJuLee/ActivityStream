@@ -1,131 +1,261 @@
 package com.ncsoft.platform.activitystream;
 
+import android.util.Xml;
+
+import com.android.volley.VolleyLog;
+
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import android.util.Xml;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
 
-/**
- * Created by hjlee on 2015-12-05.
- */
-
-/**
- * This class parses XML feeds from stackoverflow.com.
- * Given an InputStream representation of a feed, it returns a List of entries,
- * where each list element represents a single entry (post) in the XML feed.
- */
 public class StreamParser {
     private static final String ns = null;
 
-    // We don't use namespaces
+    public List<Entry> parse(String string) throws XmlPullParserException, IOException {
+
+        ByteArrayInputStream in = new ByteArrayInputStream(string.getBytes());
+
+        return parse(in);
+    }
 
     public List<Entry> parse(InputStream in) throws XmlPullParserException, IOException {
+        List<Entry> entries = new ArrayList<Entry>();
+
         try {
             XmlPullParser parser = Xml.newPullParser();
+
             parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
             parser.setInput(in, null);
             parser.nextTag();
-            return readFeed(parser);
+
+            parseFeed(parser, entries);
         } finally {
             in.close();
         }
-    }
 
-    private List<Entry> readFeed(XmlPullParser parser) throws XmlPullParserException, IOException {
-        List<Entry> entries = new ArrayList<Entry>();
-
-        parser.require(XmlPullParser.START_TAG, ns, "feed");
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
-                continue;
-            }
-            String name = parser.getName();
-            // Starts by looking for the entry tag
-            if (name.equals("entry")) {
-                entries.add(readEntry(parser));
-            } else {
-                skip(parser);
-            }
-        }
         return entries;
     }
 
-    // This class represents a single entry (post) in the XML feed.
-    // It includes the data members "title," "link," and "summary."
-    public static class Entry {
-        public final String title;
-        public final String link;
-        public final String summary;
+    private void parseFeed(XmlPullParser parser, List<Entry> entries) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "feed");
 
-        private Entry(String title, String summary, String link) {
-            this.title = title;
-            this.summary = summary;
-            this.link = link;
-        }
-    }
-
-    // Parses the contents of an entry. If it encounters a title, summary, or link tag, hands them
-    // off
-    // to their respective &quot;read&quot; methods for processing. Otherwise, skips the tag.
-    private Entry readEntry(XmlPullParser parser) throws XmlPullParserException, IOException {
-        parser.require(XmlPullParser.START_TAG, ns, "entry");
-        String title = null;
-        String summary = null;
-        String link = null;
-        while (parser.next() != XmlPullParser.END_TAG) {
-            if (parser.getEventType() != XmlPullParser.START_TAG) {
+        while(parser.next() != XmlPullParser.END_TAG) {
+            if(parser.getEventType() != XmlPullParser.START_TAG) {
                 continue;
             }
             String name = parser.getName();
-            if (name.equals("title")) {
-                title = readTitle(parser);
-            } else if (name.equals("content")) {
-                summary = readSummary(parser);
-            } else if (name.equals("link")) {
-                link = readLink(parser);
+
+            if(name.equals("entry")) {
+                parseEntry(parser, entries);
             } else {
                 skip(parser);
             }
         }
-        return new Entry(title, summary, link);
     }
 
-    // Processes title tags in the feed.
-    private String readTitle(XmlPullParser parser) throws IOException, XmlPullParserException {
-        parser.require(XmlPullParser.START_TAG, ns, "title");
-        String title = readText(parser);
-        parser.require(XmlPullParser.END_TAG, ns, "title");
-        return title;
-    }
+    private void parseEntry(XmlPullParser parser, List<Entry> entries) throws XmlPullParserException, IOException {
+        parser.require(XmlPullParser.START_TAG, ns, "entry");
 
-    // Processes link tags in the feed.
-    private String readLink(XmlPullParser parser) throws IOException, XmlPullParserException {
-        String link = "";
-        parser.require(XmlPullParser.START_TAG, ns, "link");
-        String tag = parser.getName();
-        String relType = parser.getAttributeValue(null, "rel");
-        if (tag.equals("link")) {
-            if (relType.equals("alternate")) {
-                link = parser.getAttributeValue(null, "href");
+        Entry entry = new Entry();
+
+        while(parser.next() != XmlPullParser.END_TAG) {
+            if(parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
             }
-            parser.nextTag();
+            String name = parser.getName();
+            if(name.equals("author"))
+                parseAuthor(parser, entry);
+            else if(name.equals("title"))
+                parseTitle(parser, entry);
+            else if(name.equals("content"))
+                parseContent(parser, entry);
+            else if(name.equals("updated"))
+                parseUpdated(parser, entry);
+            else if(name.equals("activity:object"))
+                parseActivityObject(parser, entry);
+            else if(name.equals("activity:target"))
+                parseActivityTarget(parser, entry);
+            else
+                skip(parser);
         }
-        //parser.require(XmlPullParser.END_TAG, ns, "link");
-        return link;
+        entries.add(entry);
     }
 
-    // Processes summary tags in the feed.
-    private String readSummary(XmlPullParser parser) throws IOException, XmlPullParserException {
+    private void parseAuthor(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "author");
+
+        while(parser.next() != XmlPullParser.END_TAG) {
+            if(parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if(name.equals("name"))
+                parseAuthorName(parser, entry);
+            else if(name.equals("link"))
+                parseAuthorImageLink(parser, entry);
+            else if(name.equals("usr:username"))
+                parseAuthorId(parser, entry);
+            else
+                skip(parser);
+        }
+
+    }
+
+    private void parseAuthorName(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "name");
+
+        entry.setAuthorName(readText(parser));
+
+        parser.require(XmlPullParser.END_TAG, ns, "name");
+    }
+
+    private void parseAuthorImageLink(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "link");
+
+        String imageHeight = parser.getAttributeValue(null, "media:height");
+        if (imageHeight.equals("48")) {
+            entry.setAuthorImageLink(parser.getAttributeValue(null, "href"));
+
+            VolleyLog.d(entry.getAuthorImageLink());
+        }
+
+        parser.nextTag();
+    }
+
+    private void parseAuthorId(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "usr:username");
+
+        entry.setAuthorId(readText(parser));
+
+        parser.require(XmlPullParser.END_TAG, ns, "usr:username");
+    }
+
+    private void parseTitle(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "title");
+
+        entry.setTitle(readText(parser));
+
+        parser.require(XmlPullParser.END_TAG, ns, "title");
+    }
+
+    private void parseContent(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
         parser.require(XmlPullParser.START_TAG, ns, "content");
-        String summary = readText(parser);
+
+        entry.setContent(readText(parser));
+
         parser.require(XmlPullParser.END_TAG, ns, "content");
-        return summary;
     }
 
-    // For the tags title and summary, extracts their text values.
+    private void parseUpdated(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "updated");
+
+        entry.setUpdated(readText(parser));
+
+        parser.require(XmlPullParser.END_TAG, ns, "updated");
+    }
+
+    private void parseActivityObject(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "activity:object");
+
+        while(parser.next() != XmlPullParser.END_TAG) {
+            if(parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if(name.equals("title"))
+                parseActivityObjectTitle(parser, entry);
+            else if(name.equals("summary"))
+                parseActivityObjectSummary(parser, entry);
+            else if(name.equals("link"))
+                parseActivityObjectLink(parser, entry);
+            else
+                skip(parser);
+        }
+    }
+
+    private void parseActivityObjectTitle(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "title");
+
+        entry.setObjectIssueKey(readText(parser));
+        VolleyLog.d(entry.getObjectIssueKey());
+
+        parser.require(XmlPullParser.END_TAG, ns, "title");
+    }
+
+    private void parseActivityObjectSummary(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "summary");
+
+        entry.setObjectIssueSummary(readText(parser));
+        VolleyLog.d(entry.getObjectIssueSummary());
+
+        parser.require(XmlPullParser.END_TAG, ns, "summary");
+    }
+
+    private void parseActivityObjectLink(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "link");
+
+        String relType = parser.getAttributeValue(null, "rel");
+        if (relType.equals("alternate")) {
+            entry.setObjectIssueWebLink(parser.getAttributeValue(null, "href"));
+        }
+
+        parser.nextTag();
+    }
+
+    private void parseActivityTarget(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "activity:target");
+
+        while(parser.next() != XmlPullParser.END_TAG) {
+            if(parser.getEventType() != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            if(name.equals("title"))
+                parseActivityTargetTitle(parser, entry);
+            else if(name.equals("summary"))
+                parseActivityTargetSummary(parser, entry);
+            else if(name.equals("link"))
+                parseActivityTargetLink(parser, entry);
+            else
+                skip(parser);
+        }
+    }
+
+    private void parseActivityTargetTitle(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "title");
+
+        entry.setTargetIssueKey(readText(parser));
+        VolleyLog.d(entry.getTargetIssueKey());
+
+        parser.require(XmlPullParser.END_TAG, ns, "title");
+    }
+
+    private void parseActivityTargetSummary(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "summary");
+
+        entry.setTargetIssueSummary(readText(parser));
+        VolleyLog.d(entry.getTargetIssueSummary());
+
+        parser.require(XmlPullParser.END_TAG, ns, "summary");
+    }
+
+    private void parseActivityTargetLink(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "link");
+
+        String relType = parser.getAttributeValue(null, "rel");
+        if (relType.equals("alternate")) {
+            entry.setTargetIssueWebLink(parser.getAttributeValue(null, "href"));
+            VolleyLog.d(entry.getTargetIssueWebLink());
+        }
+
+        parser.nextTag();
+    }
+
     private String readText(XmlPullParser parser) throws IOException, XmlPullParserException {
         String result = "";
         if (parser.next() == XmlPullParser.TEXT) {
@@ -135,16 +265,12 @@ public class StreamParser {
         return result;
     }
 
-    // Skips tags the parser isn't interested in. Uses depth to handle nested tags. i.e.,
-    // if the next tag after a START_TAG isn't a matching END_TAG, it keeps going until it
-    // finds the matching END_TAG (as indicated by the value of "depth" being 0).
     private void skip(XmlPullParser parser) throws XmlPullParserException, IOException {
         if (parser.getEventType() != XmlPullParser.START_TAG) {
             throw new IllegalStateException();
         }
         int depth = 1;
         while (depth != 0) {
-            String name = parser.getName();
             switch (parser.next()) {
                 case XmlPullParser.END_TAG:
                     depth--;
@@ -153,6 +279,120 @@ public class StreamParser {
                     depth++;
                     break;
             }
+        }
+    }
+
+    public static class Entry {
+        private String mAuthorImageLink;
+        private String mAuthorName;
+        private String mAuthorId;
+        private String mUpdated;
+        private String mObjectIssueKey;
+        private String mObjectIssueSummary;
+        private String mObjectIssueWebLink;
+        private String mTargetIssueKey;
+        private String mTargetIssueSummary;
+        private String mTargetIssueWebLink;
+        private String mTitle;
+        private String mContent;
+
+
+        public String getAuthorImageLink() {
+            return mAuthorImageLink;
+        }
+
+        public String getAuthorName() {
+            return mAuthorName;
+        }
+
+        public String getAuthorId() {
+            return mAuthorId;
+        }
+
+        public String getUpdated() {
+            return mUpdated;
+        }
+
+        public String getObjectIssueKey() {
+            return mObjectIssueKey;
+        }
+
+        public String getObjectIssueSummary() {
+            return mObjectIssueSummary;
+        }
+
+        public String getObjectIssueWebLink() {
+            return mObjectIssueWebLink;
+        }
+
+        public String getTargetIssueKey() {
+            return mTargetIssueKey;
+        }
+
+        public String getTargetIssueSummary() {
+            return mTargetIssueSummary;
+        }
+
+        public String getTargetIssueWebLink() {
+            return mTargetIssueWebLink;
+        }
+
+        public String getTitle() {
+            return mTitle;
+        }
+
+        public String getContent() {
+            if(mContent == null)
+                return "";
+            return mContent;
+        }
+
+        public void setAuthorImageLink(String authorImageLink) {
+            this.mAuthorImageLink = authorImageLink;
+        }
+
+        public void setAuthorName(String authorName) {
+            this.mAuthorName = authorName;
+        }
+
+        public void setAuthorId(String authorId) {
+            this.mAuthorId = authorId;
+        }
+
+        public void setUpdated(String updated) {
+            this.mUpdated = updated;
+        }
+
+        public void setObjectIssueKey(String issueKey) {
+            this.mObjectIssueKey = issueKey;
+        }
+
+        public void setObjectIssueSummary(String issueSummary) {
+            this.mObjectIssueSummary = issueSummary;
+        }
+
+        public void setObjectIssueWebLink(String issueWebLink) {
+            this.mObjectIssueWebLink = issueWebLink;
+        }
+
+        public void setTargetIssueKey(String issueKey) {
+            this.mTargetIssueKey = issueKey;
+        }
+
+        public void setTargetIssueSummary(String issueSummary) {
+            this.mTargetIssueSummary = issueSummary;
+        }
+
+        public void setTargetIssueWebLink(String issueWebLink) {
+            this.mTargetIssueWebLink = issueWebLink;
+        }
+
+        public void setTitle(String title) {
+            this.mTitle = title;
+        }
+
+        public void setContent(String content) {
+            this.mContent = content;
         }
     }
 }

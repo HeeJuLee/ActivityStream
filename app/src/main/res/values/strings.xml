@@ -4,9 +4,9 @@
     <string name="action_settings">Settings</string>
     <string name="login_page">JIRA 로그인</string>
 
-    <string name="test_jira_url">http://172.20.49.215:8080</string>
-    <string name="test_username">leeheeju@gmail.com</string>
-    <string name="test_password">abcde12!@</string>
+    <string name="test_jira_url">http://jira.korea.ncsoft.corp</string>
+    <string name="test_username">hjlee</string>
+    <string name="test_password"></string>
     <string name="prompt_jira_url">JIRA URL</string>
     <string name="prompt_username">ID</string>
     <string name="prompt_password">패스워드</string>

@@ -135,7 +135,6 @@ public class LoginActivity extends Activity {
                 jsonObject.addProperty("username", mUserName);
                 jsonObject.addProperty("password", mPassword);
 
-                VolleyLog.d(jsonObject.toString());
                 return jsonObject.toString().getBytes();
             }
         };

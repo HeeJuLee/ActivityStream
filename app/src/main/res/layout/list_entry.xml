@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/entry_image"
+        android:layout_width="@dimen/image_normal"
+        android:layout_height="@dimen/image_normal"/>
+
+    <TextView
+        android:id="@+id/entry_author_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/margin_large"
+        android:layout_toRightOf="@id/entry_image"
+        android:textSize="@dimen/text_normal" />
+    <TextView
+        android:id="@+id/entry_author_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/entry_author_name"
+        android:textSize="@dimen/text_small" />
+    <TextView
+        android:id="@+id/entry_issue_key"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/entry_author_name"
+        android:layout_toRightOf="@id/entry_image"
+        android:textSize="@dimen/text_normal" />
+    <TextView
+        android:id="@+id/entry_issue_summary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/entry_author_name"
+        android:layout_toRightOf="@id/entry_issue_key"
+        android:textSize="@dimen/text_normal" />
+    <WebView
+        android:id="@+id/entry_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/entry_issue_key" />
+
+</RelativeLayout>
