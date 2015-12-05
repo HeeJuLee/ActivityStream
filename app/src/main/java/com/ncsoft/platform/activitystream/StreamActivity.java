@@ -213,13 +213,14 @@ public class StreamActivity extends AppCompatActivity {
                 holder = (ViewHolder) convertView.getTag();
             }
 
+            holder.content.loadData(mEntries.get(position).getContent(), "text/html; charset=UTF-8", null);
+
             String imageUrl = mEntries.get(position).getAuthorImageLink();
             getAvataImage(imageUrl, holder.image);
             holder.authorName.setText(mEntries.get(position).getAuthorName());
             //holder.authorId.setText(mEntries.get(position).getAuthorId());
 
             String issueKey, issueSummary;
-
             if(mEntries.get(position).getTargetIssueKey() != null)
                 issueKey = mEntries.get(position).getTargetIssueKey();
             else
@@ -228,15 +229,12 @@ public class StreamActivity extends AppCompatActivity {
                 issueSummary = mEntries.get(position).getTargetIssueSummary();
             else
                 issueSummary = mEntries.get(position).getObjectIssueSummary();
-
             holder.issueKey.setText(issueKey + "  " + issueSummary);
 
             if(mEntries.get(position).getTargetIssueWebLink() != null)
                 holder.issueWebLink = mEntries.get(position).getTargetIssueWebLink();
             else
                 holder.issueWebLink = mEntries.get(position).getObjectIssueWebLink();
-
-            holder.content.loadData(mEntries.get(position).getContent(), "text/html; charset=UTF-8", null);
 
             return convertView;
         }
