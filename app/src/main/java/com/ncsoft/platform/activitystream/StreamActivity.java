@@ -28,6 +28,7 @@ import com.ncsoft.platform.activitystream.StreamParser.Entry;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,9 +55,10 @@ public class StreamActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_stream);
 
+        mEntries = new ArrayList<Entry>();
         mEntryAdapter = new EntryAdapter(this);
         mListView = (ListView) findViewById(R.id.entry_list);
-        mListView.setAdapter(mEntryAdapter);;
+        mListView.setAdapter(mEntryAdapter);
 
         try {
             mSession = new JSONObject(getIntent().getStringExtra("SESSION_RESULT"));
@@ -68,7 +70,7 @@ public class StreamActivity extends AppCompatActivity {
         // Initialize Volley Request Queue
         mVolleyQueue = Volley.newRequestQueue(this);
 
-        getActivityStream(NC_JIRA_ACTIVITY_URL + FILTER_PARAM);
+        getActivityStream(HOME_TEST_ACTIVITY_URL + FILTER_PARAM);
     }
 
     private void getActivityStream(String strActivityUrl) {
@@ -78,7 +80,6 @@ public class StreamActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(String response) {
                         parsingActivityStream(response);
-                        mEntryAdapter.notifyDataSetChanged();
                     }
                 },
                 new Response.ErrorListener() {
@@ -144,7 +145,9 @@ public class StreamActivity extends AppCompatActivity {
     private void parsingActivityStream(String response) {
         try {
             StreamParser streamParser = new StreamParser();
-            mEntries = streamParser.parse(response);
+            List<Entry> entries = streamParser.parse(response);
+            mEntries.addAll(entries);
+            mEntryAdapter.notifyDataSetChanged();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -203,7 +206,7 @@ public class StreamActivity extends AppCompatActivity {
                 holder.content.setHorizontalScrollBarEnabled(false);
                 holder.content.setVerticalScrollBarEnabled(false);
                 holder.content.setBackgroundColor(0);
-                holder.content.getSettings().setJavaScriptEnabled(true);
+                //holder.content.getSettings().setJavaScriptEnabled(true);
                 holder.content.getSettings().setDefaultFontSize(10);
                 holder.content.getSettings().setDefaultTextEncodingName("UTF-8");
 
