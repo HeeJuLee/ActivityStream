@@ -25,6 +25,9 @@ import com.google.gson.JsonObject;
 import org.json.JSONObject;
 
 public class LoginActivity extends Activity {
+    private final String TAG_REQUEST = "TAG_LOGIN";
+    private static final String JIRA_AUTH_PATH = "/rest/auth/1/session";
+    private static final String JIRA_ACTIVITY_Stream_PATH = "/activity";
 
     private EditText mJiraUrlView;
     private EditText mUserNameView;
@@ -32,13 +35,8 @@ public class LoginActivity extends Activity {
     private View mProgressView;
     private View mLoginFormView;
 
-    private String mJiraUrl;
-    private String mUserName;
-    private String mPassword;
-
     private RequestQueue mVolleyQueue;
-
-    private final String TAG_REQUEST = "TAG_LOGIN";
+    private LoginInfo mLoginInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +45,8 @@ public class LoginActivity extends Activity {
 
         setTitle(R.string.login_page);
 
+        mLoginInfo = LoginInfo.getInstance();
+
         mJiraUrlView = (EditText) findViewById(R.id.jira_url);
         mUserNameView = (EditText) findViewById(R.id.username);
         mPasswordView = (EditText) findViewById(R.id.password);
@@ -54,18 +54,43 @@ public class LoginActivity extends Activity {
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
 
-        Button mLogInButton = (Button) findViewById(R.id.login_button);
-        mLogInButton.setOnClickListener(new View.OnClickListener() {
+        Button loginButton = (Button) findViewById(R.id.login_button);
+        loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String url = mJiraUrlView.getText().toString();
+                if (TextUtils.isEmpty(url)) {
+                    mJiraUrlView.setError(getString(R.string.field_required));
+                    mJiraUrlView.requestFocus();
+                    return;
+                }
 
-                mJiraUrl = mJiraUrlView.getText().toString();
-                mUserName = mUserNameView.getText().toString();
-                mPassword = mPasswordView.getText().toString();
+                String id = mUserNameView.getText().toString();
+                if (TextUtils.isEmpty(id)) {
+                    mUserNameView.setError(getString(R.string.field_required));
+                    mUserNameView.requestFocus();
+                    return;
+                }
 
-                startLogin();
+                String password = mPasswordView.getText().toString();
+                if (TextUtils.isEmpty(password)) {
+                    mPasswordView.setError(getString(R.string.field_required));
+                    mPasswordView.requestFocus();
+                    return;
+                }
+
+                showProgress(true);
+
+                mLoginInfo.setJiraUrl(url);
+                mLoginInfo.setJiraAuthUrl(url + JIRA_AUTH_PATH);
+                mLoginInfo.setJiraStreamUrl(url + JIRA_ACTIVITY_Stream_PATH);
+                mLoginInfo.setId(id);
+                mLoginInfo.setPassword(password);
+
+                startJiraAuthLogin();
             }
         });
+
 
         mVolleyQueue = Volley.newRequestQueue(this);
     }
@@ -77,72 +102,45 @@ public class LoginActivity extends Activity {
         mVolleyQueue.cancelAll(TAG_REQUEST);
     }
 
-    public boolean checkValidate() {
+    public void startJiraAuthLogin() {
 
-        if (TextUtils.isEmpty(mJiraUrl)) {
-            mJiraUrlView.setError(getString(R.string.field_required));
-            mJiraUrlView.requestFocus();
-            return false;
-        }
+        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, mLoginInfo.getJiraAuthUrl(), null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    String session = response.getJSONObject("session").getString("value");
+                    mLoginInfo.setSession(session);
+                } catch (Exception e) {
+                    showProgress(false);
+                    showToast(e.getMessage());
+                }
 
-        if (TextUtils.isEmpty(mUserName)) {
-            mUserNameView.setError(getString(R.string.field_required));
-            mUserNameView.requestFocus();
-            return false;
-        }
-
-        if (TextUtils.isEmpty(mPassword)) {
-            mPasswordView.setError(getString(R.string.field_required));
-            mPasswordView.requestFocus();
-            return false;
-        }
-
-        return true;
-    }
-
-    public void startLogin() {
-
-        if(checkValidate() == false)
-            return;
-
-        showProgress(true);
-
-        String authUrl = mJiraUrl + "/rest/auth/1/session";
-
-        JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.POST, authUrl, null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Intent i = new Intent(LoginActivity.this, StreamActivity.class);
-                        i.putExtra("SESSION_RESULT", response.toString());
-                        startActivity(i);
-
-                        //showToast("SUCCESS: " + response.toString());
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        showProgress(false);
-                        showToast(error.getMessage());
-                    }
-                })
-        {
+                Intent i = new Intent(LoginActivity.this, StreamActivity.class);
+                startActivity(i);
+                showProgress(false);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                showProgress(false);
+                showToast(error.getMessage());
+            }
+        }) {
             @Override
             public byte[] getBody() {
 
                 JsonObject jsonObject = new JsonObject();
-                jsonObject.addProperty("username", mUserName);
-                jsonObject.addProperty("password", mPassword);
+                jsonObject.addProperty("username", mLoginInfo.getId());
+                jsonObject.addProperty("password", mLoginInfo.getPassword());
 
                 return jsonObject.toString().getBytes();
             }
         };
-
         jsonRequest.setShouldCache(true);
         jsonRequest.setTag(TAG_REQUEST);
         mVolleyQueue.add(jsonRequest);
     }
+
 
     private void showToast(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
