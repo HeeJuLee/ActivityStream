@@ -1,15 +1,14 @@
 package com.ncsoft.platform.activitystream;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
+import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -25,21 +24,25 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.ncsoft.platform.activitystream.StreamParser.Entry;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
-public class StreamActivity extends AppCompatActivity {
+public class StreamActivity extends Activity {
 
     private final String TAG_REQUEST = "TAG_ACTIVITY_STREAM";
-    private final String FILTER_PARAM = "?maxResults=50&providers=issues&os_authType=basic&title=Activity+Stream";
-
     private LoginInfo mLoginInfo;
     private ListView mListView;
     private EntryAdapter mEntryAdapter;
     private List<Entry> mEntries;
     private RequestQueue mVolleyQueue;
+    boolean mLastFlag = false;
+    private String mLastId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,19 +50,59 @@ public class StreamActivity extends AppCompatActivity {
         setContentView(R.layout.activity_stream);
 
         mEntries = new ArrayList<Entry>();
-        mEntryAdapter = new EntryAdapter(this);
         mListView = (ListView) findViewById(R.id.entry_list);
+        mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                mLastFlag = (totalItemCount > 0) && (firstVisibleItem + visibleItemCount >= totalItemCount);
+            }
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE && mLastFlag) {
+                    Toast.makeText(StreamActivity.this, "more", Toast.LENGTH_SHORT).show();
+
+                    String lastUpdateDate = null;
+                    if(mEntries.size() > 0) {
+                        Entry entry = mEntries.get(mEntries.size() - 1);
+                        lastUpdateDate = entry.getUpdated();
+                        mLastId = entry.getId();
+                    }
+
+                    requestActivityStream(makeAvtivityStreamUrl(mLoginInfo.getJiraStreamUrl(), null, lastUpdateDate));
+                }
+            }
+        });
+        mEntryAdapter = new EntryAdapter(this);
         mListView.setAdapter(mEntryAdapter);
 
         mLoginInfo = LoginInfo.getInstance();
         mVolleyQueue = Volley.newRequestQueue(this);
 
-        getActivityStream(mLoginInfo.getJiraStreamUrl() + FILTER_PARAM);
+        requestActivityStream(makeAvtivityStreamUrl(mLoginInfo.getJiraStreamUrl(), null, null));
     }
 
-    private void getActivityStream(String strActivityUrl) {
+    private String makeAvtivityStreamUrl(String url, String projectKey, String updateDate) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(url).append("?providers=issues");
+        if(projectKey != null)
+            sb.append("&streams=key+IS+").append(projectKey);
+        if(updateDate != null) {
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.'SSS'Z'", Locale.KOREA);
+                Date date = df.parse(updateDate);
+                long unixtime = date.getTime();
+                sb.append("&streams=update-date+BEFORE+").append(unixtime);
+            } catch(ParseException e) {
+                Toast.makeText(StreamActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }
 
-        StringRequest stringRequest = new StringRequest(Request.Method.GET, strActivityUrl, new Response.Listener<String>() {
+        return sb.toString();
+    }
+
+    private void requestActivityStream(String activityStreamUrl) {
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, activityStreamUrl, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 parsingActivityStream(response);
@@ -115,6 +158,11 @@ public class StreamActivity extends AppCompatActivity {
         try {
             StreamParser streamParser = new StreamParser();
             List<Entry> entries = streamParser.parse(response);
+            if(entries.size() > 0 && mLastId != null)
+            {
+                if(mLastId.equals(entries.get(0).getId()))
+                    entries.remove(0);
+            }
             mEntries.addAll(entries);
             mEntryAdapter.notifyDataSetChanged();
         } catch (Exception e) {
@@ -122,23 +170,6 @@ public class StreamActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_stream, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-    
     private class EntryAdapter extends BaseAdapter {
 
         private LayoutInflater mInflater;

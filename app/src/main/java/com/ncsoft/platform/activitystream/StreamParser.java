@@ -68,7 +68,9 @@ public class StreamParser {
                 continue;
             }
             String name = parser.getName();
-            if(name.equals("author"))
+            if(name.equals("id"))
+                parseId(parser, entry);
+            else if(name.equals("author"))
                 parseAuthor(parser, entry);
             else if(name.equals("title"))
                 parseTitle(parser, entry);
@@ -84,6 +86,14 @@ public class StreamParser {
                 skip(parser);
         }
         entries.add(entry);
+    }
+
+    private void parseId(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
+        parser.require(XmlPullParser.START_TAG, ns, "id");
+
+        entry.setId(readText(parser));
+
+        parser.require(XmlPullParser.END_TAG, ns, "id");
     }
 
     private void parseAuthor(XmlPullParser parser, Entry entry) throws IOException, XmlPullParserException {
@@ -283,6 +293,7 @@ public class StreamParser {
     }
 
     public static class Entry {
+        private String mId;
         private String mAuthorImageLink;
         private String mAuthorName;
         private String mAuthorId;
@@ -296,6 +307,8 @@ public class StreamParser {
         private String mTitle;
         private String mContent;
 
+
+        public String getId() { return mId; }
 
         public String getAuthorImageLink() {
             return mAuthorImageLink;
@@ -347,6 +360,10 @@ public class StreamParser {
             return mContent;
         }
 
+        public void setId(String id) {
+            this.mId = id;
+        }
+
         public void setAuthorImageLink(String authorImageLink) {
             this.mAuthorImageLink = authorImageLink;
         }
@@ -360,6 +377,7 @@ public class StreamParser {
         }
 
         public void setUpdated(String updated) {
+            VolleyLog.d("Updated: " + updated);
             this.mUpdated = updated;
         }
 
