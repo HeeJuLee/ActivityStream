@@ -4,12 +4,13 @@ package com.ncsoft.platform.activitystream;
  * Created by hjlee on 2015-12-19.
  */
 public class LoginInfo {
-    private String mJiraUrl;
-    private String mJiraStreamUrl;
-    private String mJiraAuthUrl;
     private String mId;
     private String mPassword;
     private String mSession;
+    private String mJiraUrl;
+    private String mJiraStreamUrl;
+    private String mJiraAuthUrl;
+    private String mJiraIssueWebUrl;
 
     private static LoginInfo mLoginInfo;
 
@@ -35,6 +36,10 @@ public class LoginInfo {
         return mJiraStreamUrl;
     }
 
+    public String getmJiraIssueWebUrl() {
+        return mJiraIssueWebUrl;
+    }
+
     public String getId() {
         return mId;
     }
@@ -57,6 +62,10 @@ public class LoginInfo {
 
     public void setJiraStreamUrl(String streamUrl) {
         this.mJiraStreamUrl = streamUrl;
+    }
+
+    public void setJiraIssueWebUrl(String url) {
+        this.mJiraIssueWebUrl = url;
     }
 
     public void setId(String id) {

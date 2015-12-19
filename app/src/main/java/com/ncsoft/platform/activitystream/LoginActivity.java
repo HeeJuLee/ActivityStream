@@ -28,6 +28,7 @@ public class LoginActivity extends Activity {
     private final String TAG_REQUEST = "TAG_LOGIN";
     private static final String JIRA_AUTH_PATH = "/rest/auth/1/session";
     private static final String JIRA_ACTIVITY_Stream_PATH = "/activity";
+    private static final String JIRA_ISSUE_WEB_PATH = "/browse/";
 
     private EditText mJiraUrlView;
     private EditText mUserNameView;
@@ -84,6 +85,7 @@ public class LoginActivity extends Activity {
                 mLoginInfo.setJiraUrl(url);
                 mLoginInfo.setJiraAuthUrl(url + JIRA_AUTH_PATH);
                 mLoginInfo.setJiraStreamUrl(url + JIRA_ACTIVITY_Stream_PATH);
+                mLoginInfo.setJiraIssueWebUrl(url + JIRA_ISSUE_WEB_PATH);
                 mLoginInfo.setId(id);
                 mLoginInfo.setPassword(password);
 

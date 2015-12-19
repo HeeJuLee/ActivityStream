@@ -19,4 +19,5 @@
     <dimen name="text_large">12dp</dimen>
     <dimen name="text_extra_large">14dp</dimen>
     <dimen name="text_very_large">20dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
 </resources>

@@ -32,7 +32,7 @@
                 android:singleLine="true" />
 
             <Button android:id="@+id/login_button" style="?android:textAppearanceMedium"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_width="300px" android:layout_height="wrap_content"
                 android:layout_marginTop="16dp" android:text="@string/action_login"
                 android:textStyle="bold" />
         </LinearLayout>

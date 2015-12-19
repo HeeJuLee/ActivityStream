@@ -17,12 +17,14 @@
         android:typeface="monospace"
         android:textSize="@dimen/text_normal" />
     <TextView
-        android:id="@+id/entry_author_id"
-        android:layout_width="wrap_content"
+        android:id="@+id/entry_update_date"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/margin_large"
+        android:layout_marginTop="@dimen/margin_small"
         android:layout_toRightOf="@id/entry_author_name"
-        android:textSize="@dimen/text_small" />
+        android:textSize="@dimen/text_small"
+        android:gravity="end" />
     <TextView
         android:id="@+id/entry_issue_key_summary"
         android:layout_width="wrap_content"
@@ -39,6 +41,9 @@
         android:layout_marginTop="@dimen/margin_large"
         android:scrollbars="none"
         android:clickable="false"
+        android:longClickable="false"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
         android:layout_below="@id/entry_issue_key_summary" />
 
 </RelativeLayout>

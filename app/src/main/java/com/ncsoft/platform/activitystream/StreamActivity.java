@@ -2,13 +2,16 @@ package com.ncsoft.platform.activitystream;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -50,36 +53,53 @@ public class StreamActivity extends Activity {
         setContentView(R.layout.activity_stream);
 
         mEntries = new ArrayList<Entry>();
-        mListView = (ListView) findViewById(R.id.entry_list);
-        mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-                mLastFlag = (totalItemCount > 0) && (firstVisibleItem + visibleItemCount >= totalItemCount);
-            }
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE && mLastFlag) {
-                    Toast.makeText(StreamActivity.this, "more", Toast.LENGTH_SHORT).show();
-
-                    String lastUpdateDate = null;
-                    if(mEntries.size() > 0) {
-                        Entry entry = mEntries.get(mEntries.size() - 1);
-                        lastUpdateDate = entry.getUpdated();
-                        mLastId = entry.getId();
-                    }
-
-                    requestActivityStream(makeAvtivityStreamUrl(mLoginInfo.getJiraStreamUrl(), null, lastUpdateDate));
-                }
-            }
-        });
-        mEntryAdapter = new EntryAdapter(this);
-        mListView.setAdapter(mEntryAdapter);
-
         mLoginInfo = LoginInfo.getInstance();
         mVolleyQueue = Volley.newRequestQueue(this);
 
+        mListView = (ListView) findViewById(R.id.entry_list);
+        mListView.setOnItemClickListener(mItemClickListener);
+        mListView.setOnScrollListener(mScrollListener);
+        mEntryAdapter = new EntryAdapter(this);
+        mListView.setAdapter(mEntryAdapter);
+
         requestActivityStream(makeAvtivityStreamUrl(mLoginInfo.getJiraStreamUrl(), null, null));
     }
+
+    private AdapterView.OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            Entry entry = mEntries.get(position);
+            Uri url = Uri.parse(mLoginInfo.getmJiraIssueWebUrl() + entry.getIssueKey());
+
+            Intent i = new Intent(StreamActivity.this, IssueActivity.class);
+            i.setData(url);
+            startActivity(i);
+        }
+    };
+
+    private AbsListView.OnScrollListener mScrollListener = new AbsListView.OnScrollListener() {
+        @Override
+        public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+            mLastFlag = (totalItemCount > 0) && (firstVisibleItem + visibleItemCount >= totalItemCount);
+        }
+
+        @Override
+        public void onScrollStateChanged(AbsListView view, int scrollState) {
+            if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_IDLE && mLastFlag) {
+                Toast.makeText(StreamActivity.this, "more", Toast.LENGTH_SHORT).show();
+
+                String lastUpdateDate = null;
+                if (mEntries.size() > 0) {
+                    Entry entry = mEntries.get(mEntries.size() - 1);
+                    lastUpdateDate = entry.getUpdated();
+                    mLastId = entry.getId();
+                }
+
+                requestActivityStream(makeAvtivityStreamUrl(mLoginInfo.getJiraStreamUrl(), null, lastUpdateDate));
+            }
+        }
+    };
 
     private String makeAvtivityStreamUrl(String url, String projectKey, String updateDate) {
         StringBuilder sb = new StringBuilder();
@@ -160,6 +180,8 @@ public class StreamActivity extends Activity {
             List<Entry> entries = streamParser.parse(response);
             if(entries.size() > 0 && mLastId != null)
             {
+                // Jira ActivityStream에서 update-date 파라미터를 밀리세컨까지 제대로 지원하지 않고 있음
+                // 따라서 맨 마지막 entry가 다시 오는 경우가 있음. 이를 체크해서 나오지 않도록 함.
                 if(mLastId.equals(entries.get(0).getId()))
                     entries.remove(0);
             }
@@ -199,13 +221,13 @@ public class StreamActivity extends Activity {
                 holder = new ViewHolder();
                 holder.image = (ImageView) convertView.findViewById(R.id.entry_image);
                 holder.authorName = (TextView) convertView.findViewById(R.id.entry_author_name);
-                holder.authorId = (TextView) convertView.findViewById(R.id.entry_author_id);
+                holder.updateDate = (TextView) convertView.findViewById(R.id.entry_update_date);
                 holder.issueKey = (TextView) convertView.findViewById(R.id.entry_issue_key_summary);
                 holder.content = (WebView) convertView.findViewById(R.id.entry_content);
                 holder.content.setHorizontalScrollBarEnabled(false);
                 holder.content.setVerticalScrollBarEnabled(false);
                 holder.content.setBackgroundColor(0);
-                holder.content.getSettings().setJavaScriptEnabled(true);
+                //holder.content.getSettings().setJavaScriptEnabled(true);
                 holder.content.getSettings().setDefaultFontSize(10);
                 holder.content.getSettings().setDefaultTextEncodingName("UTF-8");
 
@@ -214,28 +236,27 @@ public class StreamActivity extends Activity {
                 holder = (ViewHolder) convertView.getTag();
             }
 
-            holder.content.loadData(mEntries.get(position).getContent(), "text/html; charset=UTF-8", null);
-
             String imageUrl = mEntries.get(position).getAuthorImageLink();
             getAvataImage(imageUrl, holder.image);
             holder.authorName.setText(mEntries.get(position).getAuthorName());
 
-            String issueKey, issueSummary;
-            if(mEntries.get(position).getTargetIssueKey() != null)
-                issueKey = mEntries.get(position).getTargetIssueKey();
-            else
-                issueKey = mEntries.get(position).getObjectIssueKey();
-            if(mEntries.get(position).getTargetIssueSummary() != null)
-                issueSummary = mEntries.get(position).getTargetIssueSummary();
-            else
-                issueSummary = mEntries.get(position).getObjectIssueSummary();
-            String issueKeySummary = issueKey + " " + issueSummary;
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.'SSS'Z'", Locale.KOREA);
+                Date date = df.parse(mEntries.get(position).getUpdated());
+                df = new SimpleDateFormat("MM/dd");
+                holder.updateDate.setText(df.format(date));
+            } catch(ParseException e) {
+                Toast.makeText(StreamActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+
+            String issueKeySummary = mEntries.get(position).getIssueKey() + " " + mEntries.get(position).getIssueSummary();
             holder.issueKey.setText(issueKeySummary);
 
             if(mEntries.get(position).getTargetIssueWebLink() != null)
                 holder.issueWebLink = mEntries.get(position).getTargetIssueWebLink();
             else
                 holder.issueWebLink = mEntries.get(position).getObjectIssueWebLink();
+            holder.content.loadData(mEntries.get(position).getContent(), "text/html; charset=UTF-8", null);
 
             return convertView;
         }
@@ -243,7 +264,7 @@ public class StreamActivity extends Activity {
         class ViewHolder {
             ImageView image;
             TextView authorName;
-            TextView authorId;
+            TextView updateDate;
             TextView issueKey;
             String issueWebLink;
             WebView content;

@@ -85,6 +85,15 @@ public class StreamParser {
             else
                 skip(parser);
         }
+        if(entry.getTargetIssueKey() != null)
+            entry.setIssueKey(entry.getTargetIssueKey());
+        else
+            entry.setIssueKey(entry.getObjectIssueKey());
+        if(entry.getTargetIssueSummary() != null)
+            entry.setIssueSummary(entry.getTargetIssueSummary());
+        else
+            entry.setIssueSummary(entry.getObjectIssueSummary());
+
         entries.add(entry);
     }
 
@@ -298,6 +307,8 @@ public class StreamParser {
         private String mAuthorName;
         private String mAuthorId;
         private String mUpdated;
+        private String mIssueKey;
+        private String mIssueSummary;
         private String mObjectIssueKey;
         private String mObjectIssueSummary;
         private String mObjectIssueWebLink;
@@ -324,6 +335,14 @@ public class StreamParser {
 
         public String getUpdated() {
             return mUpdated;
+        }
+
+        public String getIssueKey() {
+            return mIssueKey;
+        }
+
+        public String getIssueSummary() {
+            return mIssueSummary;
         }
 
         public String getObjectIssueKey() {
@@ -383,6 +402,14 @@ public class StreamParser {
 
         public void setObjectIssueKey(String issueKey) {
             this.mObjectIssueKey = issueKey;
+        }
+
+        public void setIssueKey(String issueKey) {
+            this.mIssueKey = issueKey;
+        }
+
+        public void setIssueSummary(String issueSummary) {
+            this.mIssueSummary = issueSummary;
         }
 
         public void setObjectIssueSummary(String issueSummary) {
