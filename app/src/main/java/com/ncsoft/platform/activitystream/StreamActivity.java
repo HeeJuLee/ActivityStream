@@ -221,13 +221,14 @@ public class StreamActivity extends Activity {
                 holder = new ViewHolder();
                 holder.image = (ImageView) convertView.findViewById(R.id.entry_image);
                 holder.authorName = (TextView) convertView.findViewById(R.id.entry_author_name);
+                holder.activityCategory = (TextView) convertView.findViewById(R.id.entry_activity_category);
                 holder.updateDate = (TextView) convertView.findViewById(R.id.entry_update_date);
                 holder.issueKey = (TextView) convertView.findViewById(R.id.entry_issue_key_summary);
                 holder.content = (WebView) convertView.findViewById(R.id.entry_content);
                 holder.content.setHorizontalScrollBarEnabled(false);
                 holder.content.setVerticalScrollBarEnabled(false);
                 holder.content.setBackgroundColor(0);
-                //holder.content.getSettings().setJavaScriptEnabled(true);
+                holder.content.getSettings().setJavaScriptEnabled(true);
                 holder.content.getSettings().setDefaultFontSize(10);
                 holder.content.getSettings().setDefaultTextEncodingName("UTF-8");
 
@@ -240,14 +241,8 @@ public class StreamActivity extends Activity {
             getAvataImage(imageUrl, holder.image);
             holder.authorName.setText(mEntries.get(position).getAuthorName());
 
-            try {
-                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.'SSS'Z'", Locale.KOREA);
-                Date date = df.parse(mEntries.get(position).getUpdated());
-                df = new SimpleDateFormat("MM/dd");
-                holder.updateDate.setText(df.format(date));
-            } catch(ParseException e) {
-                Toast.makeText(StreamActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-            }
+            holder.activityCategory.setText(mEntries.get(position).getActivityCategory());
+            holder.updateDate.setText(mEntries.get(position).getUpdatedOutput());
 
             String issueKeySummary = mEntries.get(position).getIssueKey() + " " + mEntries.get(position).getIssueSummary();
             holder.issueKey.setText(issueKeySummary);
@@ -264,6 +259,7 @@ public class StreamActivity extends Activity {
         class ViewHolder {
             ImageView image;
             TextView authorName;
+            TextView activityCategory;
             TextView updateDate;
             TextView issueKey;
             String issueWebLink;

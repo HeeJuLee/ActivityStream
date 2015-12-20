@@ -31,9 +31,13 @@
                 android:inputType="textPassword" android:maxLines="1" android:text="@string/test_password"
                 android:singleLine="true" />
 
-            <Button android:id="@+id/login_button" style="?android:textAppearanceMedium"
-                android:layout_width="300px" android:layout_height="wrap_content"
-                android:layout_marginTop="16dp" android:text="@string/action_login"
+            <Button android:id="@+id/login_button"
+                android:layout_width="300px"
+                android:layout_height="80px"
+                android:layout_marginTop="16dp"
+                android:layout_gravity="left"
+                android:background="@drawable/loginbutton"
+                android:text="@string/action_login"
                 android:textStyle="bold" />
         </LinearLayout>
     </ScrollView>

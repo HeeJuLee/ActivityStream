@@ -10,8 +10,12 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class StreamParser {
     private static final String ns = null;
@@ -307,6 +311,7 @@ public class StreamParser {
         private String mAuthorName;
         private String mAuthorId;
         private String mUpdated;
+        private String mUpdatedOutput;
         private String mIssueKey;
         private String mIssueSummary;
         private String mObjectIssueKey;
@@ -316,8 +321,8 @@ public class StreamParser {
         private String mTargetIssueSummary;
         private String mTargetIssueWebLink;
         private String mTitle;
+        private String mActivityCategory;
         private String mContent;
-
 
         public String getId() { return mId; }
 
@@ -335,6 +340,10 @@ public class StreamParser {
 
         public String getUpdated() {
             return mUpdated;
+        }
+
+        public String getUpdatedOutput() {
+            return mUpdatedOutput;
         }
 
         public String getIssueKey() {
@@ -372,6 +381,9 @@ public class StreamParser {
         public String getTitle() {
             return mTitle;
         }
+        public String getActivityCategory() {
+            return mActivityCategory;
+        }
 
         public String getContent() {
             if(mContent == null)
@@ -396,8 +408,15 @@ public class StreamParser {
         }
 
         public void setUpdated(String updated) {
-            VolleyLog.d("Updated: " + updated);
             this.mUpdated = updated;
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.'SSS'Z'", Locale.KOREA);
+                Date date = df.parse(updated);
+                df = new SimpleDateFormat("MM/dd");
+                this.mUpdatedOutput = df.format(date);
+            } catch(ParseException e) {
+                this.mUpdatedOutput = "Parse Error";
+            }
         }
 
         public void setObjectIssueKey(String issueKey) {
@@ -434,6 +453,46 @@ public class StreamParser {
 
         public void setTitle(String title) {
             this.mTitle = title;
+            if(title.indexOf("updated the Description of") != -1)
+                mActivityCategory = "[Description 변경]";
+            else if(title.indexOf("commented on") != -1)
+                mActivityCategory = "[Comments 남김]";
+            else if(title.indexOf("attached one file to") != -1)
+                mActivityCategory = "[파일 첨부]";
+            else if(title.indexOf("created") != -1)
+                mActivityCategory = "[이슈 생성]";
+            else if(title.indexOf("updated the Epic Link of") != -1)
+                mActivityCategory = "[에픽 링크 수정]";
+            else if(title.indexOf("changed the Summary of") != -1)
+                mActivityCategory = "[제목 수정]";
+            else if(title.indexOf("updated the Rank of") != -1)
+                mActivityCategory = "[Rank 변경]";
+            else if(title.indexOf("started progress on") != -1)
+                mActivityCategory = "[Progress 시작]";
+            else if(title.indexOf("updated 2 fields of") != -1)
+                mActivityCategory = "[필드 변경]";
+            else if(title.indexOf("updated the Epic Child of") != -1)
+                mActivityCategory = "[에픽 하위 추가]";
+            else if(title.indexOf("removed the Epic Link of") != -1)
+                mActivityCategory = "[에픽 링크 삭제]";
+            else if(title.indexOf("removed the Epic Child of") != -1)
+                mActivityCategory = "[에픽 하위 삭제]";
+            else if(title.indexOf("removed the Epic Child of") != -1)
+                mActivityCategory = "[라벨 수정]";
+            else if(title.indexOf("linked 2 issues") != -1)
+                mActivityCategory = "[이슈 연결]";
+            else if(title.indexOf("stopped progress on") != -1)
+                mActivityCategory = "[Progress 중지]";
+            else if(title.indexOf("changed the Assignee to") != -1)
+                mActivityCategory = "[Assignee 변경]";
+            else if(title.indexOf("resolved") != -1)
+                mActivityCategory = "[Resoved]";
+            else if(title.indexOf("reopened") != -1)
+                mActivityCategory = "[Reopened]";
+            else if(title.indexOf("changed the status to") != -1)
+                mActivityCategory = "[상태 변경]";
+            else
+                mActivityCategory = "";
         }
 
         public void setContent(String content) {
