@@ -8,7 +8,6 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 public class IssueActivity extends Activity {
     private String mUrl;

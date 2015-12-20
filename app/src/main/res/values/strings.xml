@@ -13,22 +13,17 @@
     <string name="field_required">입력하세요.</string>
     <string name="action_login">로그인</string>
     <string name="title_activity_stream">StreamActivity</string>
-
-    <string name="hello_world">Hello world!</string>
-    <string name="title_activity_test">Sign in</string>
-
-    <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="error_invalid_email">This email address is invalid</string>
-    <string name="error_invalid_password">This password is too short</string>
-    <string name="error_incorrect_password">This password is incorrect</string>
-    <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
     <string name="title_activity_issue">IssueActivity</string>
-    invalid_password
+    <string name="project_filter">전체</string>
 
+    <string-array name="country_array">
+        <item>Greece</item>
+        <item>United Kingdom</item>
+        <item>Italy</item>
+        <item>France</item>
+        <item>Germany</item>
+        <item>Turkey</item>
+        <item>Poland</item>
+        <item>India</item>
+    </string-array>
 </resources>

@@ -12,9 +12,11 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,8 +43,10 @@ public class StreamActivity extends Activity {
     private final String TAG_REQUEST = "TAG_ACTIVITY_STREAM";
     private LoginInfo mLoginInfo;
     private ListView mListView;
+    private Spinner mSpinner;
     private EntryAdapter mEntryAdapter;
     private List<Entry> mEntries;
+    private List mProjectFilter;
     private RequestQueue mVolleyQueue;
     boolean mLastFlag = false;
     private String mLastId;
@@ -53,8 +57,15 @@ public class StreamActivity extends Activity {
         setContentView(R.layout.activity_stream);
 
         mEntries = new ArrayList<Entry>();
+        mProjectFilter = new ArrayList();
+        mProjectFilter.add("프로젝트 전체");
         mLoginInfo = LoginInfo.getInstance();
         mVolleyQueue = Volley.newRequestQueue(this);
+
+        mSpinner = (Spinner) findViewById(R.id.filter_spinner);
+        ArrayAdapter dataAdapter = new ArrayAdapter(this, R.layout.dropdown_item, mProjectFilter);
+        mSpinner.setAdapter(dataAdapter);
+        mSpinner.setOnItemSelectedListener(mOnItemSelectedListener);
 
         mListView = (ListView) findViewById(R.id.entry_list);
         mListView.setOnItemClickListener(mItemClickListener);
@@ -62,8 +73,21 @@ public class StreamActivity extends Activity {
         mEntryAdapter = new EntryAdapter(this);
         mListView.setAdapter(mEntryAdapter);
 
-        requestActivityStream(makeAvtivityStreamUrl(mLoginInfo.getJiraStreamUrl(), null, null));
+        requestGetProjectList();
+        requestActivityStream(makeAvtivityStreamUrl());
     }
+
+    private AdapterView.OnItemSelectedListener mOnItemSelectedListener = new AdapterView.OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            Toast.makeText(parent.getContext(), "Selected Country : " + parent.getItemAtPosition(position).toString(), Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+
+        }
+    };
 
     private AdapterView.OnItemClickListener mItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
@@ -96,14 +120,22 @@ public class StreamActivity extends Activity {
                     mLastId = entry.getId();
                 }
 
-                requestActivityStream(makeAvtivityStreamUrl(mLoginInfo.getJiraStreamUrl(), null, lastUpdateDate));
+                requestActivityStream(makeAvtivityStreamUrl(lastUpdateDate));
             }
         }
     };
 
-    private String makeAvtivityStreamUrl(String url, String projectKey, String updateDate) {
+    private String makeAvtivityStreamUrl() {
+        return makeAvtivityStreamUrl(null, null);
+    }
+
+    private String makeAvtivityStreamUrl(String updateDate) {
+        return makeAvtivityStreamUrl(updateDate, null);
+    }
+
+    private String makeAvtivityStreamUrl(String updateDate, String projectKey) {
         StringBuilder sb = new StringBuilder();
-        sb.append(url).append("?providers=issues");
+        sb.append(mLoginInfo.getJiraStreamUrl()).append("?providers=issues");
         if(projectKey != null)
             sb.append("&streams=key+IS+").append(projectKey);
         if(updateDate != null) {
@@ -118,6 +150,35 @@ public class StreamActivity extends Activity {
         }
 
         return sb.toString();
+    }
+
+    private void requestGetProjectList() {
+
+        String url = mLoginInfo.getJiraUrl() + "/rest/api/2/project";
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                parsingProjectList(response);
+            }
+        },new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(StreamActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<String, String>();
+                headers.put("cookie", "JSESSIONID=" + mLoginInfo.getSession());
+
+                return headers;
+            }
+        };
+
+        stringRequest.setShouldCache(true);
+        stringRequest.setTag(TAG_REQUEST);
+        mVolleyQueue.add(stringRequest);
     }
 
     private void requestActivityStream(String activityStreamUrl) {
@@ -190,6 +251,10 @@ public class StreamActivity extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void parsingProjectList(String response) {
+
     }
 
     private class EntryAdapter extends BaseAdapter {

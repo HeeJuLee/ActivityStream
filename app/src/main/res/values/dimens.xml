@@ -20,4 +20,7 @@
     <dimen name="text_extra_large">14sp</dimen>
     <dimen name="text_very_large">20sp</dimen>
     <dimen name="fab_margin">16sp</dimen>
+
+    <dimen name="height_small">48dp</dimen>
+
 </resources>
