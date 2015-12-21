@@ -25,7 +25,7 @@
         android:layout_marginLeft="@dimen/margin_large"
         android:layout_toRightOf="@id/entry_author_name"
         android:typeface="monospace"
-        android:textSize="@dimen/text_small" />
+        android:textSize="@dimen/text_normal" />
 
     <TextView
         android:id="@+id/entry_update_date"
@@ -34,7 +34,7 @@
         android:layout_marginLeft="@dimen/margin_large"
         android:layout_marginTop="@dimen/margin_small"
         android:layout_toRightOf="@id/entry_author_name"
-        android:textSize="@dimen/text_small"
+        android:textSize="@dimen/text_normal"
         android:gravity="right" />
 
     <TextView
@@ -44,7 +44,7 @@
         android:layout_below="@id/entry_author_name"
         android:layout_marginLeft="@dimen/margin_large"
         android:layout_toRightOf="@id/entry_image"
-        android:textSize="@dimen/text_normal" />
+        android:textSize="@dimen/text_large" />
 
     <WebView
         android:id="@+id/entry_content"

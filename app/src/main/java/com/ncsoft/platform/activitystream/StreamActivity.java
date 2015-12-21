@@ -29,6 +29,9 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.ncsoft.platform.activitystream.StreamParser.Entry;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,12 +44,16 @@ import java.util.Map;
 public class StreamActivity extends Activity {
 
     private final String TAG_REQUEST = "TAG_ACTIVITY_STREAM";
+    private final String PROEJCT_FILTER_KEY_ALL = "All";
+    private final String PROEJCT_FILTER_Name_ALL = "프로젝트 전체";
     private LoginInfo mLoginInfo;
     private ListView mListView;
     private Spinner mSpinner;
     private EntryAdapter mEntryAdapter;
     private List<Entry> mEntries;
-    private List mProjectFilter;
+    private List mProjectName;
+    private List mProjectKey;
+    private String mCurrentProjectKey = PROEJCT_FILTER_KEY_ALL;
     private RequestQueue mVolleyQueue;
     boolean mLastFlag = false;
     private String mLastId;
@@ -57,13 +64,15 @@ public class StreamActivity extends Activity {
         setContentView(R.layout.activity_stream);
 
         mEntries = new ArrayList<Entry>();
-        mProjectFilter = new ArrayList();
-        mProjectFilter.add("프로젝트 전체");
+        mProjectName = new ArrayList();
+        mProjectKey = new ArrayList();
+        mProjectName.add(PROEJCT_FILTER_Name_ALL);
+        mProjectKey.add(mCurrentProjectKey);
         mLoginInfo = LoginInfo.getInstance();
         mVolleyQueue = Volley.newRequestQueue(this);
 
         mSpinner = (Spinner) findViewById(R.id.filter_spinner);
-        ArrayAdapter dataAdapter = new ArrayAdapter(this, R.layout.dropdown_item, mProjectFilter);
+        ArrayAdapter dataAdapter = new ArrayAdapter(this, R.layout.dropdown_item, mProjectName);
         mSpinner.setAdapter(dataAdapter);
         mSpinner.setOnItemSelectedListener(mOnItemSelectedListener);
 
@@ -80,7 +89,17 @@ public class StreamActivity extends Activity {
     private AdapterView.OnItemSelectedListener mOnItemSelectedListener = new AdapterView.OnItemSelectedListener() {
         @Override
         public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-            Toast.makeText(parent.getContext(), "Selected Country : " + parent.getItemAtPosition(position).toString(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(parent.getContext(), "Selected Project: " + parent.getItemAtPosition(position).toString(), Toast.LENGTH_SHORT).show();
+
+            String projectKey = (String) mProjectKey.get(position);
+            if(!mCurrentProjectKey.equals(projectKey)) {
+                mEntries.clear();
+                mEntryAdapter.notifyDataSetChanged();
+
+                requestActivityStream(makeAvtivityStreamUrl(null, projectKey));
+
+                mCurrentProjectKey = projectKey;
+            }
         }
 
         @Override
@@ -120,7 +139,7 @@ public class StreamActivity extends Activity {
                     mLastId = entry.getId();
                 }
 
-                requestActivityStream(makeAvtivityStreamUrl(lastUpdateDate));
+                requestActivityStream(makeAvtivityStreamUrl(lastUpdateDate, mCurrentProjectKey));
             }
         }
     };
@@ -136,7 +155,7 @@ public class StreamActivity extends Activity {
     private String makeAvtivityStreamUrl(String updateDate, String projectKey) {
         StringBuilder sb = new StringBuilder();
         sb.append(mLoginInfo.getJiraStreamUrl()).append("?providers=issues");
-        if(projectKey != null)
+        if(projectKey != null && !projectKey.equals(PROEJCT_FILTER_KEY_ALL))
             sb.append("&streams=key+IS+").append(projectKey);
         if(updateDate != null) {
             try {
@@ -254,7 +273,17 @@ public class StreamActivity extends Activity {
     }
 
     private void parsingProjectList(String response) {
+        try {
+            JSONArray jsonArray = new JSONArray(response);
+            for(int i = 0; i < jsonArray.length(); i++) {
+                JSONObject obj = jsonArray.getJSONObject(i);
 
+                mProjectName.add(obj.getString("name"));
+                mProjectKey.add(obj.getString("key"));
+            }
+        } catch (Exception e) {
+            Toast.makeText(StreamActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private class EntryAdapter extends BaseAdapter {
@@ -294,7 +323,7 @@ public class StreamActivity extends Activity {
                 holder.content.setVerticalScrollBarEnabled(false);
                 holder.content.setBackgroundColor(0);
                 holder.content.getSettings().setJavaScriptEnabled(true);
-                holder.content.getSettings().setDefaultFontSize(10);
+                holder.content.getSettings().setDefaultFontSize(11);
                 holder.content.getSettings().setDefaultTextEncodingName("UTF-8");
 
                 convertView.setTag(holder);

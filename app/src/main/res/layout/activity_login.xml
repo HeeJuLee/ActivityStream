@@ -16,6 +16,14 @@
         <LinearLayout android:layout_width="match_parent"
             android:layout_height="wrap_content" android:orientation="vertical">
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/margin_extra_large"
+                android:layout_marginBottom="@dimen/margin_extra_large"
+                android:textSize="@dimen/text_very_large"
+                android:text="JIRA Site Login" />
+
             <EditText android:id="@+id/jira_url" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:hint="@string/prompt_jira_url"
                 android:inputType="textUri" android:maxLines="1" android:text="@string/test_jira_url"
@@ -32,12 +40,13 @@
                 android:singleLine="true" />
 
             <Button android:id="@+id/login_button"
-                android:layout_width="300px"
-                android:layout_height="80px"
+                android:layout_width="400px"
+                android:layout_height="120px"
                 android:layout_marginTop="16dp"
                 android:layout_gravity="left"
                 android:background="@drawable/loginbutton"
                 android:text="@string/action_login"
+                android:textSize="@dimen/text_extra_large"
                 android:textStyle="bold" />
         </LinearLayout>
     </ScrollView>
